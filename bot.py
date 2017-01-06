@@ -1,6 +1,17 @@
 import os
 import time
 from slackclient import SlackClient
+from flask import Flask
+
+app = Flask(__name__)
+# Set Up Mongo Connection
+from pymongo import MongoClient
+client = MongoClient("mongodb://katrina-slackbot:Tv3GW3eb2U3vCQ7ub5sG3KTb5Wq3tu2qRyxTa1S4bhnCVMMZiMkz9YiYxory86Yz0X6TOm1E5P0uXA7sqI3MQA==@katrina-slackbot.documents.azure.com:10250/?ssl=true&ssl_cert_reqs=CERT_NONE")
+db = client['katrina']
+remainders = db.remainders
+
+
+
 
 # The bots enivironment variable
 BOT_ID = os.environ.get("BOT_ID")
@@ -17,7 +28,6 @@ COMMAND_HELP = {"create":"Create new remainder format, format - | create <subjec
     "help":"get help for a command, format - | help <command name> |",\
     "show":"shows currently added remainders format | show |"}
 
-tasklist = {}
 
 def create_remainder(channel,command,command_name):
     """
@@ -27,13 +37,13 @@ def create_remainder(channel,command,command_name):
         command - Command that user typed
         command_name - Command that system identified
     """
-    global tasklist
     command = command.split()
     deadline = ' '.join(command[-3:])
     task =  ' '.join(command[1:len(command)-3])
     deadline_obj = time.strptime(deadline,"%b %d %Y")
     deadline_obj_str = time.strftime('%m/%d/%Y',deadline_obj)
-    tasklist[task] = [deadline_obj,deadline_obj_str]
+    rem = {"task name":task,"deadline":deadline_obj}
+    remainders.insert_one(rem)
     response = "Task Added : " + task + " on " + deadline_obj_str
 
     slack_client.api_call("chat.postMessage", channel=channel,
@@ -82,7 +92,7 @@ def parse_slack_output(slack_rtm_output):
                        output['channel']
     return None, None
 
-if __name__ == "__main__":
+def startBot():
     READ_WEBSOCKET_DELAY = 1 # 1 Second delay on reading from firehose
     if slack_client.rtm_connect():
         print("Katrina is Connected and running !")
@@ -93,3 +103,6 @@ if __name__ == "__main__":
             time.sleep(READ_WEBSOCKET_DELAY)
     else:
         print("Connection Failed. Invalid Slack token or Bot ID")
+
+if  __name__ == "__main__":
+    startBot()
