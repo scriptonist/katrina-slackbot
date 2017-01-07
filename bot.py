@@ -1,16 +1,13 @@
 import os
 import time
 from slackclient import SlackClient
-from flask import Flask
 
-app = Flask(__name__)
+
 # Set Up Mongo Connection
 from pymongo import MongoClient
-client = MongoClient("mongodb://katrina-slackbot:Tv3GW3eb2U3vCQ7ub5sG3KTb5Wq3tu2qRyxTa1S4bhnCVMMZiMkz9YiYxory86Yz0X6TOm1E5P0uXA7sqI3MQA==@katrina-slackbot.documents.azure.com:10250/?ssl=true&ssl_cert_reqs=CERT_NONE")
-db = client['katrina']
+client = MongoClient(os.environ.get("MONGO_CONNECTION_STRING"))
+db = client[os.environ.get("COLLECTION_NAME")]
 remainders = db.remainders
-
-
 
 
 # The bots enivironment variable
@@ -51,7 +48,12 @@ def create_remainder(channel,command,command_name):
 
 def get_help(channel,command,command_name):
     command = command.split()
-    response = COMMAND_HELP[command[1]]
+    if len(command) == 1:
+        response = COMMAND_HELP[command[0]]
+    elif len(command) == 2:
+        response = COMMAND_HELP[command[1]]
+    else:
+        response = "Soory! I didn't get that. Is the format correct?? Eg. help <command name>"
     slack_client.api_call("chat.postMessage", channel=channel,
                           text=response, as_user=True)
 def show_tasks(channel,command,command_name):
@@ -60,9 +62,16 @@ def show_tasks(channel,command,command_name):
         response += task + "\n"
     slack_client.api_call("chat.postMessage", channel=channel,
                           text=response, as_user=True)
-                          
+
+def show_commands(channel,command,command_name):
+    response = "These commands are now avilable ! \n"
+    for cmd in COMMAND_HELP.keys():
+        response += cmd + "\n"
+    slack_client.api_call("chat.postMessage", channel=channel,
+                          text=response, as_user=True)
+
 # Functions which handle the different commands
-COMMAND_HANDLERS = {"create":create_remainder,"help":get_help,"show":show_tasks}
+COMMAND_HANDLERS = {"create":create_remainder,"help":get_help,"show":show_tasks,"commands":show_commands}
 
 
 def handle_command(command, channel):
