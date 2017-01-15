@@ -1,7 +1,7 @@
 import os
 import time
 from slackclient import SlackClient
-
+from datetime import datetime
 # Set Up Mongo Connection
 from pymongo import MongoClient
 client = MongoClient(os.environ.get("MONGO_CONNECTION_STRING"))
@@ -36,8 +36,8 @@ def create_remainder(channel,command,command_name):
     command = command.split()
     deadline = ' '.join(command[-3:])
     task =  ' '.join(command[1:len(command)-3])
-    deadline_obj = time.strptime(deadline,"%b %d %Y")
-    deadline_obj_str = time.strftime('%m/%d/%Y',deadline_obj)
+    deadline_obj = datetime.strptime(deadline,"%b %d %Y")
+    deadline_obj_str = datetime.strftime(deadline_obj,'%m/%d/%Y')
     rem = {"task name":task,"deadline":deadline_obj}
     remainders.insert_one(rem)
     response = "Task Added : " + task + " on " + deadline_obj_str
@@ -56,13 +56,11 @@ def get_help(channel,command,command_name):
     slack_client.api_call("chat.postMessage", channel=channel,
                           text=response, as_user=True)
 def show_tasks(channel,command,command_name):
-    response = ""
+    response = "Tasks:\n"
     tasklist = remainders.find()
     for task in tasklist:
         dline = datetime.strftime(task['deadline'],'%m/%d/%Y')
         response += task["task name"] + " Complete by " + dline + "\n"
-    else:
-        response = "Task List is Empty"
     slack_client.api_call("chat.postMessage", channel=channel,
                           text=response, as_user=True)
 
