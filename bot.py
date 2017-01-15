@@ -57,8 +57,12 @@ def get_help(channel,command,command_name):
                           text=response, as_user=True)
 def show_tasks(channel,command,command_name):
     response = ""
+    tasklist = remainders.find()
     for task in tasklist:
-        response += task + "\n"
+        dline = datetime.strftime(task['deadline'],'%m/%d/%Y')
+        response += task["task name"] + " Complete by " + dline + "\n"
+    else:
+        response = "Task List is Empty"
     slack_client.api_call("chat.postMessage", channel=channel,
                           text=response, as_user=True)
 
