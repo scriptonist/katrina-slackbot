@@ -1,9 +1,6 @@
 import os
 import time
 from slackclient import SlackClient
-from flask import Flask,request,Response
-
-app = Flask(__name__)
 
 # Set Up Mongo Connection
 from pymongo import MongoClient
@@ -116,5 +113,4 @@ def startBot():
         print("Connection Failed. Invalid Slack token or Bot ID")
 
 if  __name__ == "__main__":
-    app.run()
     startBot()
